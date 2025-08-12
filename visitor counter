@@ -1,0 +1,51 @@
+#include <ESP8266WiFi.h>
+#include <Firebase_ESP_Client.h>
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+#include <DHT.h>
+#include <U8g2lib.h>
+#include "config.h" // private credentials
+
+// Ultrasonic Sensor Configuration
+const int trigPin1 = D5;
+const int echoPin1 = D6;
+
+// DHT Sensor Configuration
+#define DHTPIN D3
+#define DHTTYPE DHT11
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  
+  Serial.print("Connecting to WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("Connected!");
+
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  Firebase.begin(&config, &auth);
+}
+
+void loop() {
+  // Example sensor read (implement your visitor counting logic here)
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  if (Firebase.RTDB.setFloat(&fbdo, "/temperature", t)) {
+    Serial.println("Temperature updated to Firebase");
+  } else {
+    Serial.println("Failed to update Firebase");
+  }
+  
+  delay(2000);
+}
